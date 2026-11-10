@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gantt — Almoxarifado, Etapa 2</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#6b7280;--line:#e5e7eb;--card:#f8fafc;--today:#dc2626;
+--c1:#2563eb;--c2:#db2777;--c3:#059669;--c4:#d97706;--c5:#7c3aed;--c6:#64748b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--fg:#e6e8eb;--mut:#9aa3af;--line:#2a2f37;--card:#1c2026;--today:#f87171;
+--c1:#60a5fa;--c2:#f472b6;--c3:#34d399;--c4:#fbbf24;--c5:#a78bfa;--c6:#94a3b8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14161a;--fg:#e6e8eb;--mut:#9aa3af;--line:#2a2f37;--card:#1c2026;--today:#f87171;
+--c1:#60a5fa;--c2:#f472b6;--c3:#34d399;--c4:#fbbf24;--c5:#a78bfa;--c6:#94a3b8;color-scheme:dark}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:20px}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:var(--mut);margin:0 0 14px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 14px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.g{display:grid;min-width:max-content}
+.lab{position:sticky;left:0;z-index:3;background:var(--card);padding:0 10px;display:flex;align-items:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line);width:250px;box-sizing:border-box;font-size:13px}
+.lab small{color:var(--mut);margin-right:6px}
+.hd{position:sticky;top:0;z-index:2;background:var(--card);border-bottom:1px solid var(--line);height:44px;position:relative}
+.m{position:absolute;top:4px;font-weight:600;font-size:12px;color:var(--mut)}
+.tk{position:absolute;bottom:4px;font-size:11px;color:var(--mut);transform:translateX(-50%)}
+.row{position:relative;height:38px;border-bottom:1px solid var(--line)}
+.vl{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.bar{position:absolute;top:8px;height:22px;border-radius:5px;display:flex;align-items:center;padding:0 6px;font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;cursor:default;box-sizing:border-box}
+.bar.doing{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.3) 0 6px,transparent 6px 12px)}
+.dl{position:absolute;top:11px;width:14px;height:14px;transform:rotate(45deg);border:2px solid;box-sizing:border-box;background:var(--bg);margin-left:-7px}
+.today{position:absolute;top:0;bottom:0;width:2px;background:var(--today);z-index:1}
+.tt{position:fixed;z-index:9;pointer-events:none;background:#111827;color:#f9fafb;padding:8px 10px;border-radius:8px;font-size:12px;max-width:280px;display:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.note{margin-top:14px;color:var(--mut);font-size:12.5px}
+</style>
+</head>
+<body>
+<h1>Almoxarifado — Etapa 2</h1>
+<p class="sub">Cronograma das tarefas do documento (Tabela 1 do Backlog Kanban)</p>
+<div class="legend" id="legend"></div>
+<div class="wrap"><div class="g" id="g"></div></div>
+<p class="note">Barra cheia = feito · listrada = em andamento (termina na data prevista) · losango = a fazer (só tem prazo, sem data de início) · linha vermelha = hoje (10/11/2026). Passe o mouse (ou toque) nas barras para ver os detalhes.</p>
+<div class="tt" id="tt"></div>
+<script>
+var DAY=16, LABW=250;
+var P={"Matheus Costa":"var(--c1)","Maria Eduarda":"var(--c2)","Nicole":"var(--c3)","Matheus Lessa":"var(--c4)","Nicole e Matheus Costa":"var(--c5)","Grupo":"var(--c6)"};
+var T=[
+["D01","Requisitos funcionais e não funcionais (seção 1)","Maria Eduarda","Feito","2026-10-30","2026-10-31","2026-11-01"],
+["D02","Histórias de usuário e critérios de aceitação (seção 2)","Nicole","Feito","2026-11-02","2026-11-11","2026-11-02"],
+["D03","Diagrama de Gantt","Matheus Costa","Feito","2026-11-04",null,"2026-11-10"],
+["D04","Protótipo do fluxo “registrar saída de material” (seção 3)","Maria Eduarda","Feito","2026-11-04","2026-11-06","2026-11-08"],
+["D05","Diagrama de atividades (4.1)","Matheus Lessa","Feito","2026-11-06","2026-11-08","2026-11-08"],
+["D06","Backlog Kanban (5.1)","Matheus Costa","Fazendo","2026-11-03",null,"2026-11-03"],
+["D07","Responsáveis e fluxo de dependências (5.2)","Nicole","Feito","2026-11-03","2026-11-04","2026-11-08"],
+["D08","Cronograma em sprints (5.3)","Matheus Costa","Fazendo","2026-11-05",null,"2026-11-08"],
+["D09","Definição de concluído (5.3)","Matheus Lessa","A fazer",null,null,"2026-11-08"],
+["D10","Revisão final do documento","Grupo","A fazer",null,null,"2026-11-14"],
+["D11","Diagrama de casos de uso (4.2), complementar","Matheus Lessa","A fazer",null,null,"2026-11-12"],
+["D12","Diagrama de objetos (4.3), complementar","Maria Eduarda","A fazer",null,null,"2026-11-12"],
+["D13","Diagrama de sequência (4.4), complementar","Nicole","A fazer",null,null,"2026-11-12"],
+["D14","Organizar planejamento","Matheus Costa","Fazendo","2026-09-14",null,"2026-11-14"],
+["D15","Acompanhar o envio da primeira etapa","Nicole e Matheus Costa","Feito","2026-09-14","2026-10-09","2026-10-01"]
+];
+var D0=Date.UTC(2026,8,12), D1=Date.UTC(2026,10,16), TODAY=Date.UTC(2026,10,10);
+function u(s){var a=s.split("-");return Date.UTC(+a[0],+a[1]-1,+a[2]);}
+function off(t){return Math.round((t-D0)/864e5)*DAY;}
+function br(s){var a=s.split("-");return a[2]+"/"+a[1]+"/"+a[0];}
+var W=off(D1)+DAY, g=document.getElementById("g");
+g.style.gridTemplateColumns=LABW+"px "+W+"px";
+var h='<div class="lab" style="height:44px;font-weight:600;z-index:4">Tarefa</div><div class="hd" style="width:'+W+'px">';
+var mn=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+for(var t=D0;t<=D1;t+=864e5){var d=new Date(t);
+ if(d.getUTCDate()==1||t==D0)h+='<span class="m" style="left:'+(off(t)+3)+'px">'+mn[d.getUTCMonth()]+'/'+d.getUTCFullYear()+'</span>';
+ if(d.getUTCDay()==1)h+='<span class="tk" style="left:'+(off(t)+DAY/2)+'px">'+d.getUTCDate()+'</span>';}
+h+='</div>';
+var lines='';for(var t=D0;t<=D1;t+=864e5){if(new Date(t).getUTCDay()==1)lines+='<i class="vl" style="left:'+off(t)+'px"></i>';}
+T.forEach(function(r){
+ var id=r[0],nm=r[1],who=r[2],st=r[3],ini=r[4],pv=r[5],fim=r[6],col=P[who]||"var(--c6)";
+ h+='<div class="lab" title="'+nm+'"><small>'+id+'</small><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nm+'</span></div>';
+ h+='<div class="row" style="width:'+W+'px">'+lines;
+ var tip=encodeURIComponent('<b>'+id+' — '+nm+'</b><br>'+who+' · '+st+'<br>'+(ini?'Início: '+br(ini)+'<br>':'Sem data de início<br>')+(pv?'Data prevista: '+br(pv)+'<br>':'')+(st=="Feito"?'Fim: '+br(fim):'Prazo: '+br(fim)));
+ if(ini){var a=off(u(ini)),b=off(u(fim))+DAY;
+  h+='<div class="bar'+(st=="Fazendo"?' doing':'')+'" data-t="'+tip+'" style="left:'+a+'px;width:'+Math.max(b-a,DAY)+'px;background-color:'+col+'">'+who+'</div>';}
+ else h+='<div class="dl" data-t="'+tip+'" style="left:'+(off(u(fim))+DAY/2)+'px;border-color:'+col+'"></div>';
+ h+='</div>';
+});
+g.innerHTML=h;
+var rows=g.querySelectorAll('.row');
+var tl=document.createElement('div');tl.className='today';tl.style.left=(off(TODAY)+DAY/2)+'px';
+// linha de hoje em cada linha
+rows.forEach(function(r){var c=tl.cloneNode();r.appendChild(c);});
+var lg=document.getElementById('legend');
+Object.keys(P).forEach(function(k){lg.innerHTML+='<span><i class="sw" style="background:'+P[k]+'"></i>'+k+'</span>';});
+var tt=document.getElementById('tt');
+document.addEventListener('mousemove',function(e){
+ var el=e.target.closest('[data-t]');
+ if(!el){tt.style.display='none';return;}
+ tt.innerHTML=decodeURIComponent(el.dataset.t);tt.style.display='block';
+ tt.style.left=Math.min(e.clientX+14,innerWidth-300)+'px';tt.style.top=(e.clientY+14)+'px';
+});
+document.addEventListener('click',function(e){
+ var el=e.target.closest('[data-t]');
+ if(!el){tt.style.display='none';return;}
+ tt.innerHTML=decodeURIComponent(el.dataset.t);tt.style.display='block';
+ tt.style.left=Math.min(e.clientX+14,innerWidth-300)+'px';tt.style.top=(e.clientY+14)+'px';
+});
+</script>
+</body>
+</html>
